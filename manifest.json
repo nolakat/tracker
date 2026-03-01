@@ -1,0 +1,18 @@
+{
+  "name": "My Workout Tracker",
+  "short_name": "Workout",
+  "description": "4-day workout tracker — Lifted Glutes, Flat Abs, Toned Arms",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#FBF4ED",
+  "theme_color": "#D4735C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
