@@ -1256,15 +1256,15 @@ function renderDayView(di) {
       </div>
     </div>
     <div class="peloton-options">
-      <button class="pelo-btn ${peloSel === 0 ? 'selected' : ''}" onclick="setPeloton(${di}, 0)" ${isActive ? 'disabled' : ''}>
+      <button class="pelo-btn ${peloSel === 0 ? 'selected' : ''}" onclick="setPeloton(${di}, 0)">
         <span class="pelo-duration">&#x2014;</span>
         <span class="pelo-label">None</span>
       </button>
-      <button class="pelo-btn ${peloSel === 15 ? 'selected' : ''}" onclick="setPeloton(${di}, 15)" ${isActive ? 'disabled' : ''}>
+      <button class="pelo-btn ${peloSel === 15 ? 'selected' : ''}" onclick="setPeloton(${di}, 15)">
         <span class="pelo-duration">15</span>
         <span class="pelo-label">minutes</span>
       </button>
-      <button class="pelo-btn ${peloSel === 30 ? 'selected' : ''}" onclick="setPeloton(${di}, 30)" ${isActive ? 'disabled' : ''}>
+      <button class="pelo-btn ${peloSel === 30 ? 'selected' : ''}" onclick="setPeloton(${di}, 30)">
         <span class="pelo-duration">30</span>
         <span class="pelo-label">minutes</span>
       </button>
@@ -1530,9 +1530,12 @@ function toggleHistory(idx) {
 }
 
 function setPeloton(di, mins) {
-  if (state.workout) return; // can't change during active workout
   state.pelotonSelection[di] = mins;
   savePeloton();
+  if (state.workout && state.workout.dayIndex === di) {
+    state.workout.peloton = mins;
+    saveActive();
+  }
   render();
 }
 
