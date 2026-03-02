@@ -226,6 +226,92 @@ body {
 }
 .tips-card.open .tips-text { display: block; }
 
+/* ───── PELOTON ADD-ON ───── */
+.peloton-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  border: 1px solid transparent;
+}
+.peloton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.peloton-icon {
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  background: #FFE4E9;
+  color: #D1265B;
+}
+.peloton-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.peloton-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.peloton-options {
+  display: flex;
+  gap: 8px;
+}
+.pelo-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.pelo-btn:active { transform: scale(0.97); }
+.pelo-btn.selected {
+  border-color: #D1265B;
+  background: #FFE4E9;
+  color: #D1265B;
+}
+.pelo-btn .pelo-duration {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pelo-btn .pelo-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.peloton-card .pelo-active-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  background: #D1265B;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.card-icon.bike { background: #FFE4E9; color: #D1265B; }
+
 /* ───── EXERCISE CARDS ───── */
 .exercise-list {
   display: flex;
@@ -965,6 +1051,7 @@ body {
         <div><div class="complete-stat-val" id="completeTime">--</div><div class="complete-stat-label">Minutes</div></div>
         <div><div class="complete-stat-val" id="completeExercises">--</div><div class="complete-stat-label">Exercises</div></div>
         <div><div class="complete-stat-val" id="completeSets">--</div><div class="complete-stat-label">Sets</div></div>
+        <div id="completePelotonWrap" style="display:none"><div class="complete-stat-val" id="completePeloton">--</div><div class="complete-stat-label">Min Ride</div></div>
       </div>
       <button class="complete-close" id="completeClose">Done</button>
     </div>
@@ -1046,7 +1133,8 @@ const CATEGORY_ICONS = {
   back:  { cls:"back",  letter:"B" },
   chest: { cls:"chest", letter:"P" },
   legs:  { cls:"legs",  letter:"L" },
-  full:  { cls:"full",  letter:"F" }
+  full:  { cls:"full",  letter:"F" },
+  bike:  { cls:"bike",  letter:"R" }
 };
 
 /* ═══════════════════════════════════════
@@ -1056,10 +1144,11 @@ let state = {
   tab: 0,
   expanded: -1,
   expandedHistory: -1,
-  workout: null,       // { dayIndex, startTime, sets: [[{done,weight},...], ...] }
+  workout: null,       // { dayIndex, startTime, sets: [[{done,weight},...], ...], peloton: 0|15|30 }
   workoutInterval: null,
   history: [],
   lastWeights: {},
+  pelotonSelection: {}, // { dayIndex: 0|15|30 } - per-day selection
   confirmAction: null  // callback for confirm dialog
 };
 
@@ -1069,6 +1158,8 @@ function loadState() {
     if (h) state.history = JSON.parse(h);
     const w = localStorage.getItem('workout_weights');
     if (w) state.lastWeights = JSON.parse(w);
+    const pelo = localStorage.getItem('workout_peloton');
+    if (pelo) state.pelotonSelection = JSON.parse(pelo);
     const active = localStorage.getItem('workout_active');
     if (active) {
       const parsed = JSON.parse(active);
@@ -1087,6 +1178,9 @@ function saveHistory() {
 }
 function saveWeights() {
   try { localStorage.setItem('workout_weights', JSON.stringify(state.lastWeights)); } catch(e) {}
+}
+function savePeloton() {
+  try { localStorage.setItem('workout_peloton', JSON.stringify(state.pelotonSelection)); } catch(e) {}
 }
 function saveActive() {
   try {
@@ -1129,6 +1223,32 @@ function renderDayView(di) {
     </div>
     <div class="tips-text">${day.tips}</div>
   </div>`;
+  // Peloton ride add-on
+  const peloSel = isActive ? (state.workout.peloton || 0) : (state.pelotonSelection[di] || 0);
+  html += `<div class="peloton-card">
+    <div class="peloton-header">
+      <div class="peloton-icon">&#x1F6B2;</div>
+      <div>
+        <div class="peloton-title">Peloton Ride${peloSel ? `<span class="pelo-active-badge">${peloSel} min</span>` : ''}</div>
+        <div class="peloton-subtitle">Add a ride to this workout</div>
+      </div>
+    </div>
+    <div class="peloton-options">
+      <button class="pelo-btn ${peloSel === 0 ? 'selected' : ''}" onclick="setPeloton(${di}, 0)" ${isActive ? 'disabled' : ''}>
+        <span class="pelo-duration">&#x2014;</span>
+        <span class="pelo-label">None</span>
+      </button>
+      <button class="pelo-btn ${peloSel === 15 ? 'selected' : ''}" onclick="setPeloton(${di}, 15)" ${isActive ? 'disabled' : ''}>
+        <span class="pelo-duration">15</span>
+        <span class="pelo-label">minutes</span>
+      </button>
+      <button class="pelo-btn ${peloSel === 30 ? 'selected' : ''}" onclick="setPeloton(${di}, 30)" ${isActive ? 'disabled' : ''}>
+        <span class="pelo-duration">30</span>
+        <span class="pelo-label">minutes</span>
+      </button>
+    </div>
+  </div>`;
+
   html += `<div class="exercise-list">`;
   day.exercises.forEach((ex, ei) => {
     const icon = ex.warmup ? { cls:"warmup", letter:"W" } : CATEGORY_ICONS[ex.category] || { cls:"glute", letter:"?" };
@@ -1248,6 +1368,7 @@ function renderHistory() {
           <div class="history-stats">
             <div class="history-stat"><strong>${w.exercises.length}</strong> exercises</div>
             <div class="history-stat"><strong>${setsDone}</strong> sets</div>
+            ${w.peloton ? `<div class="history-stat"><strong>${w.peloton}</strong> min ride</div>` : ''}
           </div>
         </div>
         ${chevronSVG('history-chevron')}
@@ -1256,6 +1377,14 @@ function renderHistory() {
       // Expanded detail showing exercises + weights
       if (isExpanded) {
         html += `<div class="history-detail">`;
+        if (w.peloton) {
+          html += `<div class="history-exercise">
+            <div class="history-ex-name">&#x1F6B2; Peloton Ride</div>
+            <div class="history-sets-grid">
+              <span class="history-set-pill has-weight">${w.peloton} min</span>
+            </div>
+          </div>`;
+        }
         w.exercises.forEach(ex => {
           html += `<div class="history-exercise">
             <div class="history-ex-name">${ex.name}</div>
@@ -1378,12 +1507,21 @@ function toggleHistory(idx) {
   render();
 }
 
+function setPeloton(di, mins) {
+  if (state.workout) return; // can't change during active workout
+  state.pelotonSelection[di] = mins;
+  savePeloton();
+  render();
+}
+
 function startWorkout() {
   const di = state.tab;
   const day = DAYS[di];
+  const peloton = state.pelotonSelection[di] || 0;
   state.workout = {
     dayIndex: di,
     startTime: Date.now(),
+    peloton,
     sets: day.exercises.map(ex =>
       Array.from({ length: ex.sets }, () => ({ done: false, weight: state.lastWeights[ex.name] || '' }))
     )
@@ -1415,6 +1553,7 @@ function finishWorkout() {
     date: Date.now(),
     dayIndex: w.dayIndex,
     duration,
+    peloton: w.peloton || 0,
     exercises: day.exercises.map((ex, ei) => ({
       name: ex.name,
       sets: w.sets[ei].map(s => ({ done: s.done, weight: s.weight }))
@@ -1438,6 +1577,12 @@ function finishWorkout() {
   $('completeTime').textContent = mins;
   $('completeExercises').textContent = exDone;
   $('completeSets').textContent = setsDone;
+  if (w.peloton) {
+    $('completePeloton').textContent = w.peloton;
+    $('completePelotonWrap').style.display = '';
+  } else {
+    $('completePelotonWrap').style.display = 'none';
+  }
   $('completeOverlay').classList.add('active');
 
   // Clear workout
