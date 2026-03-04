@@ -975,6 +975,163 @@ body {
 }
 .complete-close:active { transform: scale(0.95); }
 
+/* ───── WEEKLY SUMMARY ───── */
+.summary-section {
+  margin: 0 0 20px;
+}
+.summary-week-toggle {
+  display: flex;
+  background: var(--bg-warm);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 10px;
+}
+.summary-week-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.summary-week-btn.selected {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(42,33,24,0.08);
+}
+.summary-generate-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: 2px dashed var(--primary-light);
+  border-radius: var(--radius);
+  background: var(--primary-bg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+}
+.summary-generate-btn:active {
+  transform: scale(0.97);
+  background: var(--primary-light);
+}
+.summary-generate-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.summary-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(42,33,24,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.summary-overlay.active { display: flex; }
+.summary-modal {
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 430px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.summary-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.summary-modal-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.summary-modal-close {
+  width: 32px; height: 32px;
+  border: none;
+  background: var(--bg);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+.summary-modal-close:active {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.summary-modal-close svg { width: 18px; height: 18px; }
+.summary-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.summary-text {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  background: var(--bg);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.summary-modal-footer {
+  padding: 12px 20px 20px;
+  padding-bottom: calc(20px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.summary-copy-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s, background 0.2s;
+}
+.summary-copy-btn:active { transform: scale(0.97); }
+.summary-copy-btn svg { width: 18px; height: 18px; }
+
 /* ───── UTILITIES ───── */
 .sr-only {
   position: absolute; width: 1px; height: 1px;
@@ -1059,6 +1216,31 @@ body {
         <div id="completePelotonWrap" style="display:none"><div class="complete-stat-val" id="completePeloton">--</div><div class="complete-stat-label">Min Ride</div></div>
       </div>
       <button class="complete-close" id="completeClose">Done</button>
+    </div>
+  </div>
+
+  <div class="summary-overlay" id="summaryOverlay">
+    <div class="summary-modal">
+      <div class="summary-modal-header">
+        <div class="summary-modal-title">Weekly Summary</div>
+        <button class="summary-modal-close" id="summaryClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="summary-modal-body">
+        <pre class="summary-text" id="summaryText"></pre>
+      </div>
+      <div class="summary-modal-footer">
+        <button class="summary-copy-btn" id="summaryCopy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+          Copy to Clipboard
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1171,7 +1353,8 @@ let state = {
   history: [],
   lastWeights: {},
   pelotonSelection: {}, // { dayIndex: 0|15|30 } - per-day selection
-  confirmAction: null  // callback for confirm dialog
+  confirmAction: null,  // callback for confirm dialog
+  summaryWeek: 'current' // 'current' or 'previous'
 };
 
 function loadState() {
@@ -1365,6 +1548,24 @@ function renderHistory() {
     <div class="week-dots">
       ${weekDots.map(d => `<div class="week-dot ${d ? 'filled' : ''}"></div>`).join('')}
     </div>
+  </div>`;
+
+  // Weekly summary section
+  html += `<div class="summary-section">
+    <div class="summary-week-toggle">
+      <button class="summary-week-btn ${state.summaryWeek === 'current' ? 'selected' : ''}" onclick="setSummaryWeek('current')">This Week</button>
+      <button class="summary-week-btn ${state.summaryWeek === 'previous' ? 'selected' : ''}" onclick="setSummaryWeek('previous')">Last Week</button>
+    </div>
+    <button class="summary-generate-btn" onclick="generateWeeklySummary()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      Generate Weekly Summary
+    </button>
   </div>`;
 
   if (state.history.length === 0) {
@@ -1750,6 +1951,176 @@ function getWeekDots() {
 }
 
 /* ═══════════════════════════════════════
+   WEEKLY SUMMARY
+   ═══════════════════════════════════════ */
+function getWeekRange(which) {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - dayOfWeek);
+  weekStart.setHours(0, 0, 0, 0);
+  if (which === 'previous') weekStart.setDate(weekStart.getDate() - 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+  return { start: weekStart, end: weekEnd };
+}
+
+function setSummaryWeek(which) {
+  state.summaryWeek = which;
+  render();
+}
+
+function getWeightProgressions(weekWorkouts, weekStartMs) {
+  const progressions = [];
+  const weekMaxWeights = {};
+  weekWorkouts.forEach(w => {
+    w.exercises.forEach(ex => {
+      const maxW = Math.max(0, ...ex.sets.filter(s => s.done && s.weight).map(s => parseFloat(s.weight)));
+      if (maxW > 0) {
+        if (!weekMaxWeights[ex.name] || maxW > weekMaxWeights[ex.name]) weekMaxWeights[ex.name] = maxW;
+      }
+    });
+  });
+  const priorWorkouts = state.history.filter(w => w.date < weekStartMs);
+  const priorMaxWeights = {};
+  priorWorkouts.forEach(w => {
+    w.exercises.forEach(ex => {
+      const maxW = Math.max(0, ...ex.sets.filter(s => s.done && s.weight).map(s => parseFloat(s.weight)));
+      if (maxW > 0) {
+        if (!priorMaxWeights[ex.name] || maxW > priorMaxWeights[ex.name]) priorMaxWeights[ex.name] = maxW;
+      }
+    });
+  });
+  for (const [name, currentWeight] of Object.entries(weekMaxWeights)) {
+    const prev = priorMaxWeights[name];
+    if (prev && currentWeight > prev) {
+      progressions.push({ name, previousWeight: prev, currentWeight, increase: currentWeight - prev });
+    }
+  }
+  return progressions.sort((a, b) => b.increase - a.increase);
+}
+
+function generateWeeklySummary() {
+  const { start, end } = getWeekRange(state.summaryWeek);
+  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const weekWorkouts = state.history
+    .filter(w => w.date >= start.getTime() && w.date <= end.getTime())
+    .sort((a, b) => a.date - b.date);
+
+  const daysCompleted = new Set(weekWorkouts.map(w => w.dayIndex));
+
+  let text = '';
+  text += `## Weekly Workout Summary\n`;
+  text += `**Week of ${startStr} - ${endStr}**\n\n`;
+  text += `**${daysCompleted.size}/5 workout days completed**\n`;
+
+  const dayLabels = ['Day 1 (Glutes+Core)', 'Day 2 (Arms+Upper)', 'Day 3 (Glutes+Core)', 'Day 4 (Arms+Glute Power)', 'Day 5 (Rest+Stretch)'];
+  dayLabels.forEach((label, i) => {
+    text += `  ${daysCompleted.has(i) ? '\u2705' : '\u2B1C'} ${label}\n`;
+  });
+  text += '\n---\n\n';
+
+  if (weekWorkouts.length === 0) {
+    text += `No workouts recorded this week.\n`;
+  } else {
+    weekWorkouts.forEach(w => {
+      const d = new Date(w.date);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      const day = DAYS[w.dayIndex];
+      const mins = Math.round(w.duration / 60);
+
+      text += `### ${day.name} \u2014 ${day.title}\n`;
+      text += `\uD83D\uDCC5 ${dateStr} | \u23F1 ${mins} min`;
+      if (w.peloton) text += ` | \uD83D\uDEB4 ${w.peloton}-min Peloton ride`;
+      text += '\n\n';
+
+      w.exercises.forEach(ex => {
+        const completedSets = ex.sets.filter(s => s.done);
+        const totalSets = ex.sets.length;
+        if (completedSets.length === 0) {
+          text += `- **${ex.name}**: skipped\n`;
+          return;
+        }
+        const weightStrs = completedSets.map(s => s.weight ? `${s.weight} lb` : 'BW');
+        const uniqueWeights = [...new Set(weightStrs)];
+        let weightDisplay;
+        if (uniqueWeights.length === 1) {
+          weightDisplay = uniqueWeights[0];
+        } else {
+          weightDisplay = weightStrs.join(' / ');
+        }
+        let line = `- **${ex.name}**: ${completedSets.length}/${totalSets} sets @ ${weightDisplay}`;
+        const skipped = totalSets - completedSets.length;
+        if (skipped > 0) line += ` (${skipped} skipped)`;
+        text += line + '\n';
+      });
+      text += '\n';
+    });
+  }
+
+  // Weight progression
+  text += `---\n\n### Weight Progression Highlights\n`;
+  const progressions = getWeightProgressions(weekWorkouts, start.getTime());
+  if (progressions.length > 0) {
+    progressions.forEach(p => {
+      text += `- **${p.name}**: ${p.previousWeight} lb \u2192 ${p.currentWeight} lb (+${p.increase} lb) \u2B06\n`;
+    });
+  } else {
+    text += `No weight increases this week.\n`;
+  }
+  text += '\n';
+
+  // Rest days
+  const activeDates = new Set(weekWorkouts.map(w => new Date(w.date).toDateString()));
+  const restDayList = [];
+  const now = new Date();
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(start.getTime() + i * 86400000);
+    if (!activeDates.has(dayDate.toDateString()) && dayDate <= now) {
+      restDayList.push(dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+    }
+  }
+  if (restDayList.length > 0) {
+    text += `**Rest days**: ${restDayList.join(', ')}\n`;
+  }
+
+  showSummaryModal(text);
+}
+
+function showSummaryModal(text) {
+  $('summaryText').textContent = text;
+  $('summaryOverlay').classList.add('active');
+}
+
+function hideSummaryModal() {
+  $('summaryOverlay').classList.remove('active');
+}
+
+async function copySummary() {
+  const text = $('summaryText').textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  const btn = $('summaryCopy');
+  const original = btn.innerHTML;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+  btn.style.background = 'var(--success)';
+  setTimeout(() => { btn.innerHTML = original; btn.style.background = ''; }, 2000);
+}
+
+/* ═══════════════════════════════════════
    EVENTS
    ═══════════════════════════════════════ */
 $('bottomNav').addEventListener('click', e => {
@@ -1773,6 +2144,12 @@ $('confirmYes').addEventListener('click', () => {
 
 $('completeClose').addEventListener('click', () => {
   $('completeOverlay').classList.remove('active');
+});
+
+$('summaryClose').addEventListener('click', hideSummaryModal);
+$('summaryCopy').addEventListener('click', copySummary);
+$('summaryOverlay').addEventListener('click', (e) => {
+  if (e.target === $('summaryOverlay')) hideSummaryModal();
 });
 
 /* ═══════════════════════════════════════
